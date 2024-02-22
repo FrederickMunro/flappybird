@@ -1,0 +1,13 @@
+body {
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+  padding: 0;
+}
+
+#board {
+  padding: 0;
+  margin: 0;
+  display: block;
+  background-image: url('./assets/flappy_background.png');
+  background-size: auto 100%;
+}
