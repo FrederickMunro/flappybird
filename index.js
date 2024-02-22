@@ -20,12 +20,14 @@ var Pipe = /** @class */ (function () {
         this.random = Math.random() * (this.h - 100);
         this.topPipe.onload = function () { };
         this.bottomPipe.onload = function () { };
+        this.scored = false;
     }
     return Pipe;
 }());
 // Variables
 var board;
 var ctx;
+var score = 0;
 var bird;
 var loadBird = function () {
     bird.image = new Image();
@@ -60,7 +62,14 @@ var update = function () {
     pipeArray.forEach(function (pipe) {
         pipe.x -= board.height / 500;
         pipe.draw(ctx);
+        if (pipe.x < bird.x && !pipe.scored) {
+            score++;
+            pipe.scored = true;
+        }
     });
+    ctx.fillStyle = "white";
+    ctx.font = "bold ".concat(board.height / 20, "px Arial");
+    ctx.fillText("Score: " + score, board.width * 0.01, board.height * 0.075);
 };
 var placePipe = function () {
     var pipe = new Pipe(board.width, 0, (board.height / 1.2) / 8, board.height / 1.2);

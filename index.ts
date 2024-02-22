@@ -6,6 +6,7 @@ class Pipe {
   topPipe: HTMLImageElement;
   bottomPipe: HTMLImageElement;
   random: number;
+  scored: boolean;
 
   constructor(x: number, y: number, w: number, h: number) {
     this.x = x;
@@ -19,6 +20,7 @@ class Pipe {
     this.random = Math.random()*(this.h-100);
     this.topPipe.onload = () => {};
     this.bottomPipe.onload = () => {};
+    this.scored = false;
   }
 
   draw = (ctx: CanvasRenderingContext2D) => {
@@ -34,6 +36,7 @@ class Pipe {
 // Variables
 let board: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
+let score = 0;
 
 let bird: {
   x: number;
@@ -89,7 +92,15 @@ const update = () => {
   pipeArray.forEach(pipe => {
     pipe.x -= board.height/500;
     pipe.draw(ctx)
+    if (pipe.x < bird.x && !pipe.scored) {
+      score++;
+      pipe.scored = true;
+    }
   })
+  
+  ctx.fillStyle = "white";
+  ctx.font = `bold ${board.height/20}px Arial`;
+  ctx.fillText("Score: " + score, board.width * 0.01, board.height * 0.075);
 }
 
 const placePipe = () => {
