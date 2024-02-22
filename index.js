@@ -76,6 +76,12 @@ var handleKeyPress = function (e) {
         velocity = board.height / 180;
     }
 };
+var handleMouseClick = function (e) {
+    velocity = board.height / 180;
+};
+var handleTouchMove = function (event) {
+    event.preventDefault();
+};
 var update = function () {
     requestAnimationFrame(update);
     ctx.clearRect(0, 0, board.width, board.height);
@@ -121,4 +127,6 @@ window.onload = function () {
     // Add event listener for window resize
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('keypress', handleKeyPress);
+    window.addEventListener('click', handleMouseClick);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
 };
