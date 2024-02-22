@@ -37,6 +37,7 @@ class Pipe {
 let board: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let score = 0;
+let velocity = 0;
 
 let bird: {
   x: number;
@@ -54,8 +55,12 @@ const loadBird = () => {
 }
 
 const drawBird = () => {
+  ctx.save();
+  ctx.translate(bird.x + bird.w / 2, bird.y + bird.h / 2);
+  ctx.rotate(-Math.atan2(velocity, 10));
   if (bird.image)
-    ctx.drawImage(bird.image, bird.x, bird.y, bird.w, bird.h);
+    ctx.drawImage(bird.image, -bird.w / 2, -bird.h / 2, bird.w, bird.h);
+  ctx.restore();
 }
 
 let pipe: {
@@ -83,9 +88,22 @@ const resizeCanvas = () => {
   drawBird();
 }
 
+const handleKeyPress = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowUp' || e.key === ' ') {
+    velocity = board.height/180;
+  }
+}
+
 const update = () => {
   requestAnimationFrame(update);
   ctx.clearRect(0, 0, board.width, board.height);
+
+  velocity -= board.height/4500;
+
+  bird = {
+    ...bird,
+    y: bird.y - velocity,
+  }
 
   drawBird();
 
@@ -96,11 +114,31 @@ const update = () => {
       score++;
       pipe.scored = true;
     }
+    if (
+      (bird.x > pipe.x - pipe.w/2 &&
+      bird.x - bird.w/2 < pipe.x + pipe.w/2 &&
+      (bird.y < pipe.h-pipe.random ||
+      bird.y + bird.h > pipe.y + pipe.h - pipe.random + pipe.h/5)) ||
+      bird.y < 0 ||
+      bird.y + bird.h > board.height
+    ) {
+      // Collision detected, reset the game
+      score = 0;
+      velocity = 0;
+      pipeArray = [];
+      bird = {
+        ...bird,
+        x: board.width / 3,
+        y: board.height / 2,
+      };
+      return; // Exit the forEach loop early since the game is reset
+    }
   })
   
   ctx.fillStyle = "white";
   ctx.font = `bold ${board.height/20}px Arial`;
   ctx.fillText("Score: " + score, board.width * 0.01, board.height * 0.075);
+
 }
 
 const placePipe = () => {
@@ -120,4 +158,5 @@ window.onload = () => {
 
   // Add event listener for window resize
   window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('keypress', handleKeyPress)
 }
