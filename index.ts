@@ -98,8 +98,8 @@ const handleMouseClick = (e: MouseEvent) => {
   velocity = board.height/180;
 }
 
-const handleTouchMove = (event: TouchEvent) => {
-  event.preventDefault();
+const handleTouchMove = (e: TouchEvent) => {
+  e.preventDefault();
 }
 
 const update = () => {
@@ -166,7 +166,7 @@ window.onload = () => {
 
   // Add event listener for window resize
   window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('keypress', handleKeyPress)
-  window.addEventListener('click', handleMouseClick)
-  window.addEventListener('touchmove', handleTouchMove, { passive: false });
+  window.addEventListener('keypress', handleKeyPress);
+  window.addEventListener('click', handleMouseClick);
+  window.addEventListener('touchmove', handleTouchMove);
 }
