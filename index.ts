@@ -94,6 +94,10 @@ const handleKeyPress = (e: KeyboardEvent) => {
   }
 }
 
+const handleMouseClick = (e: MouseEvent) {
+  velocity = board.height/180;
+}
+
 const update = () => {
   requestAnimationFrame(update);
   ctx.clearRect(0, 0, board.width, board.height);
@@ -159,4 +163,5 @@ window.onload = () => {
   // Add event listener for window resize
   window.addEventListener('resize', resizeCanvas);
   window.addEventListener('keypress', handleKeyPress)
+  window.addEventListener('click', handleMouseClick)
 }
