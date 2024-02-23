@@ -9,8 +9,29 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+// Variables
+var canvas;
+var ctx;
+var score = 0;
+var velocity = 0;
+var jumpForce = 4;
+var gravity = 0.1;
+var maxVelocity = 4;
+var pipeSpeed = 1.5;
+var canvasSize = {
+    h: 640,
+    w: 480,
+};
+var pipeSize = {
+    h: 640,
+    w: 80,
+};
+var placePipeInterval = 3000;
+var bird;
+var pipeArray = [];
+var pipe;
 var Pipe = /** @class */ (function () {
-    function Pipe(x, y, w, h) {
+    function Pipe(x) {
         var _this = this;
         this.draw = function (ctx) {
             if (_this.topPipe) {
@@ -21,26 +42,54 @@ var Pipe = /** @class */ (function () {
             }
         };
         this.x = x;
-        this.y = y;
-        this.h = h;
-        this.w = w;
+        this.y = 0;
+        this.h = pipeSize.h;
+        this.w = pipeSize.w;
         this.topPipe = new Image();
         this.bottomPipe = new Image();
         this.topPipe.src = './assets/pipe-top.png';
         this.bottomPipe.src = './assets/pipe-bottom.png';
-        this.random = Math.random() * (this.h - 100);
+        this.random = Math.random() * (canvasSize.h * 0.6) + (canvasSize.h * 0.2);
         this.topPipe.onload = function () { };
         this.bottomPipe.onload = function () { };
         this.scored = false;
     }
     return Pipe;
 }());
-// Variables
-var board;
-var ctx;
-var score = 0;
-var velocity = 0;
-var bird;
+var setCanvas = function () {
+    clearCanvas();
+    setCanvasDimensions();
+    bird = {
+        x: canvas.width / 3,
+        y: canvas.height / 2,
+        w: 54.4,
+        h: 38.4,
+        path: './assets/yellowbird-midflap.png',
+    };
+    loadBird();
+    drawBird();
+};
+var resizeCanvas = function () {
+    if (shouldResizeCanvas()) {
+        clearCanvas();
+        setCanvasDimensions();
+        bird = __assign(__assign({}, bird), { x: canvas.width / 3, y: canvas.height / 2, path: './assets/yellowbird-midflap.png' });
+        drawBird();
+    }
+};
+var clearCanvas = function () {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
+var setCanvasDimensions = function () {
+    canvas.height = canvasSize.h;
+    canvas.width = Math.min(canvasSize.w, window.innerWidth);
+};
+var shouldResizeCanvas = function () {
+    if (window.innerWidth > canvasSize.w) {
+        return false;
+    }
+    return true;
+};
 var loadBird = function () {
     bird.image = new Image();
     bird.image.src = bird.path;
@@ -54,79 +103,105 @@ var drawBird = function () {
         ctx.drawImage(bird.image, -bird.w / 2, -bird.h / 2, bird.w, bird.h);
     ctx.restore();
 };
-var pipe;
-var pipeArray = [];
-var resizeCanvas = function () {
-    ctx.clearRect(0, 0, board.width, board.height);
+var placePipe = function () {
+    var pipe = new Pipe(canvas.width);
+    pipeArray.push(pipe);
+};
+var applyGravity = function () {
+    velocity -= gravity;
+    velocity = Math.max(velocity, -maxVelocity);
+    bird = __assign(__assign({}, bird), { y: bird.y - velocity });
+};
+var movePipe = function (pipe) {
+    pipe.x -= pipeSpeed;
+};
+var updateScoreOnPoint = function (pipe) {
+    if (pipe.x < bird.x && !pipe.scored) {
+        score++;
+        pipe.scored = true;
+    }
+};
+var shouldReset = function (pipe) {
+    return (birdHitPipe(pipe) || birdOutOfBounds());
+};
+var reset = function () {
+    score = 0;
+    velocity = 0;
     pipeArray = [];
-    board.height = window.innerHeight;
-    board.width = window.innerWidth;
-    bird = {
-        x: board.width / 3,
-        y: board.height / 2,
-        w: board.height / 15,
-        h: ((board.height / 15) / 17) * 12,
-        path: './assets/yellowbird-midflap.png',
-    };
+    bird = __assign(__assign({}, bird), { x: canvas.width / 3, y: canvas.height / 2 });
+};
+var birdHitPipe = function (pipe) {
+    return (bird.x > pipe.x - pipe.w / 2 &&
+        bird.x - bird.w / 2 < pipe.x + pipe.w / 2 &&
+        (bird.y < pipe.h - pipe.random ||
+            bird.y + bird.h > pipe.y + pipe.h - pipe.random + pipe.h / 5));
+};
+var birdOutOfBounds = function () {
+    return (bird.y < 0 || bird.y + bird.h > canvas.height);
+};
+var drawScore = function () {
+    var text = '' + score;
+    var x = canvas.width / 2; // Adjust the x-coordinate as needed
+    var y = 50; // Adjust the y-coordinate as needed
+    var fontSize = 40; // Adjust the font size as needed
+    drawTextWithOutline(text, x, y, fontSize);
+};
+var drawTextWithOutline = function (text, x, y, fontSize) {
+    ctx.font = 'bold ' + fontSize + 'px Arial';
+    // Measure text height
+    var textMetrics = ctx.measureText(text);
+    var textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+    // Calculate vertical position adjustment
+    var yOffset = textMetrics.actualBoundingBoxAscent - textHeight / 2 + 2; // Adjust the offset here
+    // Draw black outline
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 5; // Increase the thickness here
+    ctx.strokeText(text, x, y + yOffset);
+    // Draw filled text
+    ctx.fillStyle = 'white'; // or any other color for the inside of the letter
+    ctx.fillText(text, x, y + yOffset);
+};
+var update = function () {
+    requestAnimationFrame(update);
+    clearCanvas();
+    applyGravity();
     loadBird();
     drawBird();
+    pipeArray.forEach(function (pipe) {
+        movePipe(pipe);
+        pipe.draw(ctx);
+        updateScoreOnPoint(pipe);
+        if (shouldReset(pipe))
+            reset();
+        return;
+    });
+    drawScore();
 };
+// Handlers
 var handleKeyPress = function (e) {
     if (e.key === 'ArrowUp' || e.key === ' ') {
-        velocity = board.height / 180;
+        velocity = jumpForce;
     }
 };
 var handleMouseClick = function (e) {
-    velocity = board.height / 180;
+    velocity = jumpForce;
 };
 var handleTouchMove = function (e) {
     e.preventDefault();
 };
-var update = function () {
-    requestAnimationFrame(update);
-    ctx.clearRect(0, 0, board.width, board.height);
-    velocity -= board.height / 4500;
-    bird = __assign(__assign({}, bird), { y: bird.y - velocity });
-    drawBird();
-    pipeArray.forEach(function (pipe) {
-        pipe.x -= board.height / 500;
-        pipe.draw(ctx);
-        if (pipe.x < bird.x && !pipe.scored) {
-            score++;
-            pipe.scored = true;
-        }
-        if ((bird.x > pipe.x - pipe.w / 2 &&
-            bird.x - bird.w / 2 < pipe.x + pipe.w / 2 &&
-            (bird.y < pipe.h - pipe.random ||
-                bird.y + bird.h > pipe.y + pipe.h - pipe.random + pipe.h / 5)) ||
-            bird.y < 0 ||
-            bird.y + bird.h > board.height) {
-            // Collision detected, reset the game
-            score = 0;
-            velocity = 0;
-            pipeArray = [];
-            bird = __assign(__assign({}, bird), { x: board.width / 3, y: board.height / 2 });
-            return; // Exit the forEach loop early since the game is reset
-        }
-    });
-    ctx.fillStyle = "white";
-    ctx.font = "bold ".concat(board.height / 20, "px Arial");
-    ctx.fillText("Score: " + score, board.width * 0.01, board.height * 0.075);
-};
-var placePipe = function () {
-    var pipe = new Pipe(board.width, 0, (board.height / 1.2) / 8, board.height / 1.2);
-    pipeArray.push(pipe);
-};
-window.onload = function () {
-    board = document.getElementById('board');
-    ctx = board.getContext('2d');
-    resizeCanvas();
-    placePipe();
-    setInterval(placePipe, board.height * 2);
-    requestAnimationFrame(update);
-    // Add event listener for window resize
+// Listeners
+var addEventListeners = function () {
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('keypress', handleKeyPress);
     window.addEventListener('click', handleMouseClick);
     window.addEventListener('touchmove', handleTouchMove);
+};
+window.onload = function () {
+    canvas = document.getElementById('board');
+    ctx = canvas.getContext('2d');
+    setCanvas();
+    placePipe();
+    setInterval(placePipe, placePipeInterval);
+    requestAnimationFrame(update);
+    addEventListeners();
 };
