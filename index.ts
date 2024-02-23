@@ -7,6 +7,7 @@ const jumpForce = 4;
 const gravity = 0.1;
 const maxVelocity = 4;
 const pipeSpeed = 1.5;
+const pipeGap = 150;
 const canvasSize = {
   h: 640,
   w: 480,
@@ -62,7 +63,7 @@ class Pipe {
       ctx.drawImage(this.topPipe, this.x, -this.random, this.w, this.h);
     }
     if (this.bottomPipe) {
-      ctx.drawImage(this.bottomPipe, this.x, this.y + this.h - this.random + this.h/5, this.w, this.h);
+      ctx.drawImage(this.bottomPipe, this.x, this.y + this.h - this.random + pipeGap, this.w, this.h);
     }
   }
 }
@@ -177,34 +178,6 @@ const birdOutOfBounds = () => {
   return (bird.y < 0 || bird.y + bird.h > canvas.height);
 }
 
-const drawScore = () => {
-  const text = '' + score;
-  const x = canvas.width / 2; // Adjust the x-coordinate as needed
-  const y = 50; // Adjust the y-coordinate as needed
-  const fontSize = 40; // Adjust the font size as needed
-  drawTextWithOutline(text, x, y, fontSize);
-}
-
-const drawTextWithOutline = (text: string, x: number, y: number, fontSize: number) => {
-  ctx.font = 'bold ' + fontSize + 'px Arial';
-  
-  // Measure text height
-  const textMetrics = ctx.measureText(text);
-  const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-  
-  // Calculate vertical position adjustment
-  const yOffset = textMetrics.actualBoundingBoxAscent - textHeight / 2 + 2; // Adjust the offset here
-  
-  // Draw black outline
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = 5; // Increase the thickness here
-  ctx.strokeText(text, x, y + yOffset);
-  
-  // Draw filled text
-  ctx.fillStyle = 'white'; // or any other color for the inside of the letter
-  ctx.fillText(text, x, y + yOffset);
-}
-
 const update = () => {
   requestAnimationFrame(update);
   clearCanvas();
@@ -255,4 +228,32 @@ window.onload = () => {
   setInterval(placePipe, placePipeInterval);
   requestAnimationFrame(update);
   addEventListeners();
+}
+
+const drawScore = () => {
+  const text = '' + score;
+  const x = canvas.width / 2; // Adjust the x-coordinate as needed
+  const y = 50; // Adjust the y-coordinate as needed
+  const fontSize = 40; // Adjust the font size as needed
+  drawTextWithOutline(text, x, y, fontSize);
+}
+
+const drawTextWithOutline = (text: string, x: number, y: number, fontSize: number) => {
+  ctx.font = 'bold ' + fontSize + 'px Arial';
+  
+  // Measure text height
+  const textMetrics = ctx.measureText(text);
+  const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+  
+  // Calculate vertical position adjustment
+  const yOffset = textMetrics.actualBoundingBoxAscent - textHeight / 2 + 2; // Adjust the offset here
+  
+  // Draw black outline
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 5; // Increase the thickness here
+  ctx.strokeText(text, x, y + yOffset);
+  
+  // Draw filled text
+  ctx.fillStyle = 'white'; // or any other color for the inside of the letter
+  ctx.fillText(text, x, y + yOffset);
 }

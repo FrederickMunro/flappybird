@@ -18,6 +18,7 @@ var jumpForce = 4;
 var gravity = 0.1;
 var maxVelocity = 4;
 var pipeSpeed = 1.5;
+var pipeGap = 150;
 var canvasSize = {
     h: 640,
     w: 480,
@@ -38,7 +39,7 @@ var Pipe = /** @class */ (function () {
                 ctx.drawImage(_this.topPipe, _this.x, -_this.random, _this.w, _this.h);
             }
             if (_this.bottomPipe) {
-                ctx.drawImage(_this.bottomPipe, _this.x, _this.y + _this.h - _this.random + _this.h / 5, _this.w, _this.h);
+                ctx.drawImage(_this.bottomPipe, _this.x, _this.y + _this.h - _this.random + pipeGap, _this.w, _this.h);
             }
         };
         this.x = x;
@@ -139,28 +140,6 @@ var birdHitPipe = function (pipe) {
 var birdOutOfBounds = function () {
     return (bird.y < 0 || bird.y + bird.h > canvas.height);
 };
-var drawScore = function () {
-    var text = '' + score;
-    var x = canvas.width / 2; // Adjust the x-coordinate as needed
-    var y = 50; // Adjust the y-coordinate as needed
-    var fontSize = 40; // Adjust the font size as needed
-    drawTextWithOutline(text, x, y, fontSize);
-};
-var drawTextWithOutline = function (text, x, y, fontSize) {
-    ctx.font = 'bold ' + fontSize + 'px Arial';
-    // Measure text height
-    var textMetrics = ctx.measureText(text);
-    var textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-    // Calculate vertical position adjustment
-    var yOffset = textMetrics.actualBoundingBoxAscent - textHeight / 2 + 2; // Adjust the offset here
-    // Draw black outline
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 5; // Increase the thickness here
-    ctx.strokeText(text, x, y + yOffset);
-    // Draw filled text
-    ctx.fillStyle = 'white'; // or any other color for the inside of the letter
-    ctx.fillText(text, x, y + yOffset);
-};
 var update = function () {
     requestAnimationFrame(update);
     clearCanvas();
@@ -204,4 +183,26 @@ window.onload = function () {
     setInterval(placePipe, placePipeInterval);
     requestAnimationFrame(update);
     addEventListeners();
+};
+var drawScore = function () {
+    var text = '' + score;
+    var x = canvas.width / 2; // Adjust the x-coordinate as needed
+    var y = 50; // Adjust the y-coordinate as needed
+    var fontSize = 40; // Adjust the font size as needed
+    drawTextWithOutline(text, x, y, fontSize);
+};
+var drawTextWithOutline = function (text, x, y, fontSize) {
+    ctx.font = 'bold ' + fontSize + 'px Arial';
+    // Measure text height
+    var textMetrics = ctx.measureText(text);
+    var textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+    // Calculate vertical position adjustment
+    var yOffset = textMetrics.actualBoundingBoxAscent - textHeight / 2 + 2; // Adjust the offset here
+    // Draw black outline
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 5; // Increase the thickness here
+    ctx.strokeText(text, x, y + yOffset);
+    // Draw filled text
+    ctx.fillStyle = 'white'; // or any other color for the inside of the letter
+    ctx.fillText(text, x, y + yOffset);
 };
