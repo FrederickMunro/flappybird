@@ -10,14 +10,15 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 // Variables
+localStorage.setItem('maxScore', '0');
 var canvas;
 var ctx;
 var score = 0;
 var velocity = 0;
-var jumpForce = 4;
-var gravity = 0.1;
-var maxVelocity = 4;
-var pipeSpeed = 1.5;
+var jumpForce = 10;
+var gravity = 0.6;
+var maxVelocity = 8;
+var pipeSpeed = 2;
 var pipeGap = 150;
 var canvasSize = {
     h: 640,
@@ -50,7 +51,7 @@ var Pipe = /** @class */ (function () {
         this.bottomPipe = new Image();
         this.topPipe.src = './assets/pipe-top.png';
         this.bottomPipe.src = './assets/pipe-bottom.png';
-        this.random = Math.random() * (canvasSize.h * 0.6) + (canvasSize.h * 0.2);
+        this.random = Math.random() * (canvasSize.h * 0.6) + (canvasSize.h * 0.1) + pipeGap;
         this.topPipe.onload = function () { };
         this.bottomPipe.onload = function () { };
         this.scored = false;
@@ -74,7 +75,7 @@ var resizeCanvas = function () {
     if (shouldResizeCanvas()) {
         clearCanvas();
         setCanvasDimensions();
-        bird = __assign(__assign({}, bird), { x: canvas.width / 3, y: canvas.height / 2, path: './assets/yellowbird-midflap.png' });
+        bird = __assign(__assign({}, bird), { x: canvas.width / 3, y: canvas.height / 2 });
         drawBird();
     }
 };
@@ -99,19 +100,23 @@ var loadBird = function () {
 var drawBird = function () {
     ctx.save();
     ctx.translate(bird.x + bird.w / 2, bird.y + bird.h / 2);
-    ctx.rotate(-Math.atan2(velocity, 10));
+    ctx.rotate(getBirdAngle());
     if (bird.image)
         ctx.drawImage(bird.image, -bird.w / 2, -bird.h / 2, bird.w, bird.h);
     ctx.restore();
 };
 var placePipe = function () {
-    var pipe = new Pipe(canvas.width);
-    pipeArray.push(pipe);
+    if (triggerStart) {
+        var pipe_1 = new Pipe(canvas.width);
+        pipeArray.push(pipe_1);
+    }
 };
 var applyGravity = function () {
-    velocity -= gravity;
-    velocity = Math.max(velocity, -maxVelocity);
-    bird = __assign(__assign({}, bird), { y: bird.y - velocity });
+    if (triggerStart) {
+        velocity -= gravity;
+        velocity = Math.max(velocity, -maxVelocity);
+        bird = __assign(__assign({}, bird), { y: bird.y - velocity });
+    }
 };
 var movePipe = function (pipe) {
     pipe.x -= pipeSpeed;
@@ -119,6 +124,8 @@ var movePipe = function (pipe) {
 var updateScoreOnPoint = function (pipe) {
     if (pipe.x < bird.x && !pipe.scored) {
         score++;
+        if (score > parseInt(localStorage.getItem('maxScore')))
+            localStorage.setItem('maxScore', score.toString());
         pipe.scored = true;
     }
 };
@@ -128,19 +135,18 @@ var shouldReset = function (pipe) {
 var reset = function () {
     score = 0;
     velocity = 0;
+    triggerStart = false;
     pipeArray = [];
     bird = __assign(__assign({}, bird), { x: canvas.width / 3, y: canvas.height / 2 });
 };
-var birdHitPipe = function (pipe) {
-    return (bird.x > pipe.x - pipe.w / 2 &&
-        bird.x - bird.w / 2 < pipe.x + pipe.w / 2 &&
-        (bird.y < pipe.h - pipe.random ||
-            bird.y + bird.h > pipe.y + pipe.h - pipe.random + pipe.h / 5));
-};
 var birdOutOfBounds = function () {
-    return (bird.y < 0 || bird.y + bird.h > canvas.height);
+    return (bird.y < 0 || bird.y + Math.sqrt((bird.h / 2) * (bird.h / 2) + (bird.w / 2) * (bird.w / 2)) > canvas.height);
+};
+var birdHitGround = function () {
+    return (bird.y < 0);
 };
 var update = function () {
+    counter++;
     requestAnimationFrame(update);
     clearCanvas();
     applyGravity();
@@ -150,9 +156,10 @@ var update = function () {
         movePipe(pipe);
         pipe.draw(ctx);
         updateScoreOnPoint(pipe);
-        if (shouldReset(pipe))
+        if (shouldReset(pipe)) {
             reset();
-        return;
+            return;
+        }
     });
     drawScore();
 };
@@ -163,6 +170,8 @@ var handleKeyPress = function (e) {
     }
 };
 var handleMouseClick = function (e) {
+    if (!triggerStart)
+        triggerStart = true;
     velocity = jumpForce;
 };
 var handleTouchMove = function (e) {
@@ -190,6 +199,7 @@ var drawScore = function () {
     var y = 50; // Adjust the y-coordinate as needed
     var fontSize = 40; // Adjust the font size as needed
     drawTextWithOutline(text, x, y, fontSize);
+    drawTextWithOutline('Best: ' + Math.max(score, parseInt(localStorage.getItem('maxScore'))), x - 30, y + 35, fontSize - 15);
 };
 var drawTextWithOutline = function (text, x, y, fontSize) {
     ctx.font = 'bold ' + fontSize + 'px Arial';
@@ -206,3 +216,34 @@ var drawTextWithOutline = function (text, x, y, fontSize) {
     ctx.fillStyle = 'white'; // or any other color for the inside of the letter
     ctx.fillText(text, x, y + yOffset);
 };
+var birdHitPipe = function (pipe) {
+    var isWithinPipeBounds = bird.x > pipe.x - pipe.w / 2 &&
+        bird.x - bird.w / 2 < pipe.x + pipe.w / 2;
+    var isOutidePipeGap = bird.y < pipe.h - pipe.random ||
+        bird.y + bird.h > pipe.y + pipe.h - pipe.random + pipeGap;
+    return (isWithinPipeBounds && isOutidePipeGap);
+};
+var angle = 0;
+var getBirdAngle = function () {
+    if (!triggerStart) {
+        angle = 0;
+        bird.path = counter % 14 < 7 ? pathUp : pathDown;
+    }
+    else if (velocity > -maxVelocity) {
+        angle = -69.5;
+        bird.path = counter % 14 < 7 ? pathUp : pathDown;
+    }
+    else {
+        if (angle < -67.7) {
+            bird.path = pathMid;
+            console.log(angle);
+            angle += 0.15;
+        }
+    }
+    return angle;
+};
+var pathUp = './assets/yellowbird-upflap.png';
+var pathMid = './assets/yellowbird-midflap.png';
+var pathDown = './assets/yellowbird-downflap.png';
+var triggerStart = false;
+var counter = 0;
